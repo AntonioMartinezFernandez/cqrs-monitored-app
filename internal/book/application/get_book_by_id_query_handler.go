@@ -8,28 +8,28 @@ import (
 	pkg_bus "github.com/AntonioMartinezFernandez/cqrs-monitored-app/pkg/bus"
 )
 
-type GetAllBooksQueryHandler struct {
+type GetBookByIDQueryHandler struct {
 	bookRepository book_domain.BookRepository
 }
 
-func NewGetAllBooksQueryHandler(
+func NewGetBookByIDQueryHandler(
 	bookRepository book_domain.BookRepository,
-) *GetAllBooksQueryHandler {
-	return &GetAllBooksQueryHandler{
+) *GetBookByIDQueryHandler {
+	return &GetBookByIDQueryHandler{
 		bookRepository: bookRepository,
 	}
 }
 
-func (q GetAllBooksQueryHandler) Handle(ctx context.Context, query pkg_bus.Dto) (any, error) {
-	_, ok := query.(*GetAllBooksQuery)
+func (q GetBookByIDQueryHandler) Handle(ctx context.Context, query pkg_bus.Dto) (any, error) {
+	parsedQuery, ok := query.(*GetBookByIDQuery)
 	if !ok {
 		return nil, pkg_bus.NewInvalidDto("invalid query")
 	}
 
-	books, err := q.bookRepository.FindAll(ctx)
+	book, err := q.bookRepository.FindByID(ctx, parsedQuery.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	return books, nil
+	return book, nil
 }

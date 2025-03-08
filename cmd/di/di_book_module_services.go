@@ -9,16 +9,19 @@ import (
 type BookModuleServices struct {
 	CreateBookCommandHandler *book_application.CreateBookCommandHandler
 	GetAllBooksQueryHandler  *book_application.GetAllBooksQueryHandler
+	GetBookByIDQueryHandler  *book_application.GetBookByIDQueryHandler
 }
 
 func InitBookModuleServices(commonServices *CommonServices, httpServices *HttpServices) *BookModuleServices {
 	bookRepository := book_infra.NewInMemoryBookRepository()
 	createBookCommandHandler := book_application.NewCreateBookCommandHandler(bookRepository)
-	getAllBooksQueryHandler := book_application.NewGetAllBooksQueryHandler(commonServices.UlidProvider, bookRepository)
+	getAllBooksQueryHandler := book_application.NewGetAllBooksQueryHandler(bookRepository)
+	getBookByIDQueryHandler := book_application.NewGetBookByIDQueryHandler(bookRepository)
 
 	bookModuleServices := &BookModuleServices{
 		CreateBookCommandHandler: createBookCommandHandler,
 		GetAllBooksQueryHandler:  getAllBooksQueryHandler,
+		GetBookByIDQueryHandler:  getBookByIDQueryHandler,
 	}
 
 	registerBookCommandHandlers(commonServices, bookModuleServices)
@@ -42,6 +45,11 @@ func registerBookQueryHandlers(commonServices *CommonServices, bookModuleService
 		&book_application.GetAllBooksQuery{},
 		bookModuleServices.GetAllBooksQueryHandler,
 	)
+	registerQueryOrPanic(
+		commonServices.QueryBus,
+		&book_application.GetBookByIDQuery{},
+		bookModuleServices.GetBookByIDQueryHandler,
+	)
 }
 
 func registerBookRoutes(commonServices *CommonServices, httpServices *HttpServices) {
@@ -56,6 +64,16 @@ func registerBookRoutes(commonServices *CommonServices, httpServices *HttpServic
 	httpServices.Router.Get(
 		"/api/books",
 		book_http.NewGetBooksController(
+			commonServices.UlidProvider,
+			commonServices.QueryBus,
+			httpServices.JsonApiResponseMiddleware,
+		),
+	)
+
+	httpServices.Router.Get(
+		"/api/books/{book_id}",
+		book_http.NewGetBookController(
+			commonServices.UlidProvider,
 			commonServices.QueryBus,
 			httpServices.JsonApiResponseMiddleware,
 		),
