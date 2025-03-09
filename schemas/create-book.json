@@ -8,10 +8,10 @@
     "title": {
       "type": "string"
     },
-    "author": {
+    "authorID": {
       "type": "string"
     }
   },
-  "required": ["id", "title", "author"],
+  "required": ["id", "title", "authorID"],
   "additionalProperties": false
 }

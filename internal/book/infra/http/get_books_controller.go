@@ -25,12 +25,12 @@ func NewGetBooksController(
 			ctx, writer := r.Context(), w
 			books, _ := queryResponse.([]book_domain.Book)
 
-			var booksResponse []Book
+			booksResponse := []Book{}
 			for _, book := range books {
 				booksResponse = append(booksResponse, Book{
 					ID:        book.ID(),
 					Title:     book.Title(),
-					Author:    book.Author(),
+					AuthorID:  book.AuthorID(),
 					CreatedAt: book.CreatedAt(),
 				})
 			}

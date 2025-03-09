@@ -39,7 +39,7 @@ func NewPostBookController(
 		cmd := book_application.NewCreateBookCommand(
 			createBookRequestBody.ID,
 			createBookRequestBody.Title,
-			createBookRequestBody.Author,
+			createBookRequestBody.AuthorID,
 			time.Now(),
 		)
 

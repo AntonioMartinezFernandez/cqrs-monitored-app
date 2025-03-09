@@ -12,13 +12,13 @@ var _ book_domain.BookRepository = &InMemoryBookRepository{}
 
 type InMemoryBookRepository struct {
 	mut   *sync.Mutex
-	books map[string]book_domain.Book
+	books []book_domain.Book
 }
 
 func NewInMemoryBookRepository() *InMemoryBookRepository {
 	return &InMemoryBookRepository{
 		mut:   &sync.Mutex{},
-		books: make(map[string]book_domain.Book),
+		books: make([]book_domain.Book, 0),
 	}
 }
 
@@ -37,18 +37,27 @@ func (r *InMemoryBookRepository) FindByID(_ context.Context, id string) (*book_d
 	r.mut.Lock()
 	defer r.mut.Unlock()
 
-	book, ok := r.books[id]
-	if !ok {
-		return nil, errors.New("book not found")
+	for _, book := range r.books {
+		if book.ID() == id {
+			return &book, nil
+		}
 	}
-	return &book, nil
+
+	return nil, errors.New("book not found")
 }
 
-func (r *InMemoryBookRepository) Save(_ context.Context, book book_domain.Book) error {
+func (r *InMemoryBookRepository) Save(_ context.Context, newBook book_domain.Book) error {
 	r.mut.Lock()
 	defer r.mut.Unlock()
 
-	r.books[book.ID()] = book
+	for _, book := range r.books {
+		if book.ID() == newBook.ID() {
+			return errors.New("book already exists")
+		}
+	}
+
+	r.books = append(r.books, newBook)
+
 	return nil
 }
 
@@ -56,14 +65,30 @@ func (r *InMemoryBookRepository) Update(_ context.Context, book book_domain.Book
 	r.mut.Lock()
 	defer r.mut.Unlock()
 
-	r.books[book.ID()] = book
-	return nil
+	for i, oldBook := range r.books {
+		if oldBook.ID() == book.ID() {
+			oldBook.Update(book.Title(), book.AuthorID())
+			r.books[i] = oldBook
+			return nil
+		}
+	}
+
+	return errors.New("book not found")
 }
 
 func (r *InMemoryBookRepository) Delete(_ context.Context, id string) error {
 	r.mut.Lock()
 	defer r.mut.Unlock()
 
-	delete(r.books, id)
+	books := make([]book_domain.Book, 0, len(r.books))
+
+	for _, book := range r.books {
+		if book.ID() != id {
+			books = append(books, book)
+		}
+	}
+
+	r.books = books
+
 	return nil
 }

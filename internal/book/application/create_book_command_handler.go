@@ -25,7 +25,7 @@ func (cb CreateBookCommandHandler) Handle(ctx context.Context, command bus.Dto) 
 		return bus.NewInvalidDto("Invalid command")
 	}
 
-	book := book_domain.NewBook(cbCommand.ID, cbCommand.Title, cbCommand.Author, cbCommand.CreatedAt)
+	book := book_domain.NewBook(cbCommand.ID, cbCommand.Title, cbCommand.AuthorID, cbCommand.CreatedAt)
 	err := cb.bookRepository.Save(ctx, *book)
 	if err != nil {
 		return errors.New("error saving book")

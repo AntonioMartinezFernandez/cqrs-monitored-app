@@ -8,20 +8,20 @@ const blockingKey = "book_operation"
 type CreateBookCommand struct {
 	ID        string
 	Title     string
-	Author    string
+	AuthorID  string
 	CreatedAt time.Time
 }
 
 func NewCreateBookCommand(
 	id string,
 	title string,
-	author string,
+	authorID string,
 	createdAt time.Time,
 ) *CreateBookCommand {
 	return &CreateBookCommand{
 		ID:        id,
 		Title:     title,
-		Author:    author,
+		AuthorID:  authorID,
 		CreatedAt: createdAt,
 	}
 }

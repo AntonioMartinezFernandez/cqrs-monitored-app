@@ -9,6 +9,7 @@ import (
 
 	pkg_bus "github.com/AntonioMartinezFernandez/cqrs-monitored-app/pkg/bus"
 	pkg_command_bus "github.com/AntonioMartinezFernandez/cqrs-monitored-app/pkg/bus/command"
+	pkg_event_bus "github.com/AntonioMartinezFernandez/cqrs-monitored-app/pkg/bus/event"
 	pkg_query_bus "github.com/AntonioMartinezFernandez/cqrs-monitored-app/pkg/bus/query"
 	pkg_json_schema "github.com/AntonioMartinezFernandez/cqrs-monitored-app/pkg/json-schema"
 	pkg_logger "github.com/AntonioMartinezFernandez/cqrs-monitored-app/pkg/logger"
@@ -32,6 +33,7 @@ type CommonServices struct {
 	TimeProvider        pkg_utils.DateTimeProvider
 	CommandBus          *pkg_command_bus.CommandBus
 	QueryBus            *pkg_query_bus.QueryBus
+	EventBus            *pkg_event_bus.EventBus
 }
 
 func InitCommonServices(ctx context.Context) *CommonServices {
@@ -45,6 +47,7 @@ func InitCommonServices(ctx context.Context) *CommonServices {
 	timeProvider := pkg_utils.NewSystemTimeProvider()
 	commandBus := pkg_command_bus.InitCommandBus(logger, distributedMutex)
 	queryBus := pkg_query_bus.InitQueryBus(logger)
+	eventBus := pkg_event_bus.NewEventBus()
 
 	grpcConnection, grpcErr := pkg_observability.InitGrpcConnInsecure(config.OtelGrpcHost, config.OtelGrpcPort)
 	if grpcErr != nil {
@@ -73,6 +76,7 @@ func InitCommonServices(ctx context.Context) *CommonServices {
 		TimeProvider:        timeProvider,
 		CommandBus:          commandBus,
 		QueryBus:            queryBus,
+		EventBus:            eventBus,
 	}
 }
 

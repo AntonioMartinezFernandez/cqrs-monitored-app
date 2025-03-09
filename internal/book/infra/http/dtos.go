@@ -3,15 +3,15 @@ package book_http
 import "time"
 
 type CreateBookRequestBody struct {
-	ID     string `json:"id"`
-	Title  string `json:"title"`
-	Author string `json:"author"`
+	ID       string `json:"id"`
+	Title    string `json:"title"`
+	AuthorID string `json:"authorID"`
 }
 
 type Book struct {
 	ID        string    `json:"id" jsonapi:"primary,books"`
 	Title     string    `json:"title" jsonapi:"attr,title"`
-	Author    string    `json:"author" jsonapi:"attr,author"`
+	AuthorID  string    `json:"authorID" jsonapi:"attr,authorID"`
 	CreatedAt time.Time `json:"created_at" jsonapi:"attr,created_at"`
 }
 

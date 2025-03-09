@@ -31,7 +31,7 @@ func NewGetBookController(
 			bookResponse := Book{
 				ID:        book.ID(),
 				Title:     book.Title(),
-				Author:    book.Author(),
+				AuthorID:  book.AuthorID(),
 				CreatedAt: book.CreatedAt(),
 			}
 
@@ -43,7 +43,7 @@ func NewGetBookController(
 			jarm.WriteResponse(ctx, writer, &response, http.StatusOK)
 			return
 		default:
-			ctx, writer, errResponse := r.Context(), w, json_api_response.NewInternalServerErrorWithDetails(err.Error())
+			ctx, writer, errResponse := r.Context(), w, json_api_response.NewNotFound(err.Error())
 			jarm.WriteErrorResponse(ctx, writer, errResponse, http.StatusInternalServerError, err)
 			return
 		}
