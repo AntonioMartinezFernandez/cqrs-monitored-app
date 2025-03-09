@@ -8,6 +8,7 @@ import (
 
 	book_application "github.com/AntonioMartinezFernandez/cqrs-monitored-app/internal/book/application"
 	book_domain_mocks "github.com/AntonioMartinezFernandez/cqrs-monitored-app/internal/book/domain/mocks"
+	"github.com/AntonioMartinezFernandez/cqrs-monitored-app/pkg/bus/event"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -25,10 +26,11 @@ func TestCreateBookCommandHandler_Handle(t *testing.T) {
 	t.Run("successfully create book", func(t *testing.T) {
 		ctx := context.Background()
 
+		eventBus := event.NewEventBus()
 		mockRepo := book_domain_mocks.NewBookRepository(t)
 		mockRepo.On("Save", mock.Anything, mock.Anything).Return(nil).Once()
 
-		handler := book_application.NewCreateBookCommandHandler(mockRepo)
+		handler := book_application.NewCreateBookCommandHandler(eventBus, mockRepo)
 
 		cmd := book_application.NewCreateBookCommand("1", "Test Book", "Test Author", time.Now())
 
@@ -40,10 +42,11 @@ func TestCreateBookCommandHandler_Handle(t *testing.T) {
 	t.Run("error saving book", func(t *testing.T) {
 		ctx := context.Background()
 
+		eventBus := event.NewEventBus()
 		mockRepo := book_domain_mocks.NewBookRepository(t)
 		mockRepo.On("Save", mock.Anything, mock.Anything).Return(errors.New("error saving book")).Once()
 
-		handler := book_application.NewCreateBookCommandHandler(mockRepo)
+		handler := book_application.NewCreateBookCommandHandler(eventBus, mockRepo)
 
 		cmd := book_application.NewCreateBookCommand("1", "Test Book", "Test Author", time.Now())
 

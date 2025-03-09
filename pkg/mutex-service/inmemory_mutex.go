@@ -9,7 +9,7 @@ import (
 
 type InmemoryMutexService struct {
 	logger pkg_logger.Logger
-	mut    *sync.Mutex
+	mut    sync.Mutex
 	locks  map[string]*sync.Mutex
 }
 
@@ -18,7 +18,7 @@ func NewInmemoryMutexService(
 ) *InmemoryMutexService {
 	return &InmemoryMutexService{
 		logger: logger,
-		mut:    &sync.Mutex{},
+		mut:    sync.Mutex{},
 		locks:  make(map[string]*sync.Mutex),
 	}
 }

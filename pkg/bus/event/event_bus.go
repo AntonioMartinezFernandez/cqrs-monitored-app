@@ -1,59 +1,77 @@
 package event
 
 import (
+	"context"
 	"fmt"
+	"sync"
 
 	"github.com/AntonioMartinezFernandez/cqrs-monitored-app/pkg/bus"
 )
 
+// EventBus is the central component that handles event dispatching and subscription.
 type EventBus struct {
-	subscribers map[string][]chan bus.Event
+	mut         *sync.RWMutex
+	subscribers map[string][]EventHandler
 }
 
+// NewEventBus creates a new instance of EventBus.
 func NewEventBus() *EventBus {
 	return &EventBus{
-		subscribers: make(map[string][]chan bus.Event),
+		mut:         &sync.RWMutex{},
+		subscribers: make(map[string][]EventHandler),
 	}
 }
 
-func (b *EventBus) Subscribe(topic string, handler EventHandler) {
-	ch := make(chan bus.Event)
-	go func() {
-		for msg := range ch {
-			err := handler.Handle(msg)
-			if err != nil {
-				fmt.Println(err)
-			}
-		}
-	}()
+// Subscribe adds a new handler for a specific event.
+func (eb *EventBus) Subscribe(eventName string, handler EventHandler) {
+	eb.mut.Lock()
+	defer eb.mut.Unlock()
 
-	if _, exists := b.subscribers[topic]; !exists {
-		b.subscribers[topic] = make([]chan bus.Event, 0)
-	}
-
-	b.subscribers[topic] = append(b.subscribers[topic], ch)
+	// Append the handler to the list of handlers for the given event name
+	eb.subscribers[eventName] = append(eb.subscribers[eventName], handler)
 }
 
-func (b *EventBus) Unsubscribe(topic string, ch chan bus.Event) {
-	if _, exists := b.subscribers[topic]; !exists {
+// Unsubscribe removes a handler for a specific event.
+func (eb *EventBus) Unsubscribe(eventName string, handler EventHandler) {
+	eb.mut.Lock()
+	defer eb.mut.Unlock()
+
+	handlers, ok := eb.subscribers[eventName]
+	if !ok {
 		return
 	}
 
-	for i, subscriber := range b.subscribers[topic] {
-		if subscriber == ch {
-			// Remove the channel from the slice
-			b.subscribers[topic] = append(b.subscribers[topic][:i], b.subscribers[topic][i+1:]...)
+	// Remove the handler
+	for i, h := range handlers {
+		if fmt.Sprintf("%p", h) == fmt.Sprintf("%p", handler) {
+			eb.subscribers[eventName] = append(handlers[:i], handlers[i+1:]...)
 			break
 		}
 	}
 }
 
-func (b *EventBus) Publish(event bus.Event) {
-	if _, exists := b.subscribers[event.Name()]; !exists {
+// PublishOne publishes an event to all subscribers of that event.
+func (eb *EventBus) PublishOne(ctx context.Context, event bus.Event) {
+	eb.mut.RLock()
+	defer eb.mut.RUnlock()
+
+	// Check if there are any subscribers for this event
+	handlers, ok := eb.subscribers[event.Name()]
+	if !ok {
 		return
 	}
 
-	for _, ch := range b.subscribers[event.Name()] {
-		ch <- event
+	// Call each handler with the event
+	for _, handler := range handlers {
+		go handler.Handle(ctx, event)
+	}
+}
+
+func (eb *EventBus) Publish(ctx context.Context, events bus.Events) {
+	eb.mut.RLock()
+	defer eb.mut.RUnlock()
+
+	for _, event := range events {
+		eb.PublishOne(ctx, event)
 	}
 }

@@ -123,3 +123,11 @@ func registerCommandOrPanic(
 		panic(err)
 	}
 }
+
+func registerEvent(
+	eventBus pkg_event_bus.EventBus,
+	eventName string,
+	eventHandler pkg_event_bus.EventHandler,
+) {
+	eventBus.Subscribe(eventName, eventHandler)
+}

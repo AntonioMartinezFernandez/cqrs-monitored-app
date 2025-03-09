@@ -1,9 +1,11 @@
 package event
 
 import (
+	"context"
+
 	"github.com/AntonioMartinezFernandez/cqrs-monitored-app/pkg/bus"
 )
 
 type EventHandler interface {
-	Handle(event bus.Event) error
+	Handle(ctx context.Context, event bus.Event)
 }

@@ -9,13 +9,13 @@ import (
 )
 
 type InmemoryAuthorRepository struct {
-	mut     *sync.Mutex
+	mut     sync.Mutex
 	authors []author_domain.Author
 }
 
 func NewInmemoryAuthorRepository() *InmemoryAuthorRepository {
 	return &InmemoryAuthorRepository{
-		mut:     &sync.Mutex{},
+		mut:     sync.Mutex{},
 		authors: []author_domain.Author{},
 	}
 }

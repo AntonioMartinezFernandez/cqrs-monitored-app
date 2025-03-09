@@ -12,13 +12,13 @@ import (
 var _ book_domain.BookRepository = &InMemoryBookRepository{}
 
 type InMemoryBookRepository struct {
-	mut   *sync.Mutex
+	mut   sync.Mutex
 	books []book_domain.Book
 }
 
 func NewInMemoryBookRepository() *InMemoryBookRepository {
 	return &InMemoryBookRepository{
-		mut:   &sync.Mutex{},
+		mut:   sync.Mutex{},
 		books: []book_domain.Book{},
 	}
 }

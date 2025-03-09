@@ -7,14 +7,20 @@ import (
 	book_domain "github.com/AntonioMartinezFernandez/cqrs-monitored-app/internal/book/domain"
 
 	"github.com/AntonioMartinezFernandez/cqrs-monitored-app/pkg/bus"
+	"github.com/AntonioMartinezFernandez/cqrs-monitored-app/pkg/bus/event"
 )
 
 type CreateBookCommandHandler struct {
+	eventBus       *event.EventBus
 	bookRepository book_domain.BookRepository
 }
 
-func NewCreateBookCommandHandler(bookRepository book_domain.BookRepository) *CreateBookCommandHandler {
+func NewCreateBookCommandHandler(
+	eventBus *event.EventBus,
+	bookRepository book_domain.BookRepository,
+) *CreateBookCommandHandler {
 	return &CreateBookCommandHandler{
+		eventBus:       eventBus,
 		bookRepository: bookRepository,
 	}
 }
@@ -30,6 +36,9 @@ func (cb CreateBookCommandHandler) Handle(ctx context.Context, command bus.Dto) 
 	if err != nil {
 		return errors.New("error saving book")
 	}
+
+	events := book.PullEvents()
+	cb.eventBus.Publish(ctx, events)
 
 	return nil
 }

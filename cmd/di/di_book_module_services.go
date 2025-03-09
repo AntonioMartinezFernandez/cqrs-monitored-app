@@ -2,8 +2,10 @@ package di
 
 import (
 	book_application "github.com/AntonioMartinezFernandez/cqrs-monitored-app/internal/book/application"
+	book_domain "github.com/AntonioMartinezFernandez/cqrs-monitored-app/internal/book/domain"
 	book_infra "github.com/AntonioMartinezFernandez/cqrs-monitored-app/internal/book/infra"
 	book_http "github.com/AntonioMartinezFernandez/cqrs-monitored-app/internal/book/infra/http"
+	"github.com/AntonioMartinezFernandez/cqrs-monitored-app/pkg/bus/event"
 )
 
 type BookModuleServices struct {
@@ -12,27 +14,32 @@ type BookModuleServices struct {
 	UpdateBookCommandHandler *book_application.UpdateBookCommandHandler
 	GetAllBooksQueryHandler  *book_application.GetAllBooksQueryHandler
 	GetBookByIDQueryHandler  *book_application.GetBookByIDQueryHandler
+
+	PrintBookOnBookCreatedEventHandler event.EventHandler
 }
 
 func InitBookModuleServices(commonServices *CommonServices, httpServices *HttpServices) *BookModuleServices {
 	bookRepository := book_infra.NewInMemoryBookRepository()
 
-	createBookCommandHandler := book_application.NewCreateBookCommandHandler(bookRepository)
+	createBookCommandHandler := book_application.NewCreateBookCommandHandler(commonServices.EventBus, bookRepository)
 	deleteBookCommandHandler := book_application.NewDeleteBookCommandHandler(bookRepository)
 	updateBookCommandHandler := book_application.NewUpdateBookCommandHandler(bookRepository)
 	getAllBooksQueryHandler := book_application.NewGetAllBooksQueryHandler(bookRepository)
 	getBookByIDQueryHandler := book_application.NewGetBookByIDQueryHandler(bookRepository)
+	printBookOnBookCreatedEvent := book_application.NewPrintBookOnBookCreatedEventHandler()
 
 	bookModuleServices := &BookModuleServices{
-		CreateBookCommandHandler: createBookCommandHandler,
-		DeleteBookCommandHandler: deleteBookCommandHandler,
-		UpdateBookCommandHandler: updateBookCommandHandler,
-		GetAllBooksQueryHandler:  getAllBooksQueryHandler,
-		GetBookByIDQueryHandler:  getBookByIDQueryHandler,
+		CreateBookCommandHandler:           createBookCommandHandler,
+		DeleteBookCommandHandler:           deleteBookCommandHandler,
+		UpdateBookCommandHandler:           updateBookCommandHandler,
+		GetAllBooksQueryHandler:            getAllBooksQueryHandler,
+		GetBookByIDQueryHandler:            getBookByIDQueryHandler,
+		PrintBookOnBookCreatedEventHandler: printBookOnBookCreatedEvent,
 	}
 
 	registerBookCommandHandlers(commonServices, bookModuleServices)
 	registerBookQueryHandlers(commonServices, bookModuleServices)
+	registerBookEventHandlers(commonServices, bookModuleServices)
 	registerBookRoutes(commonServices, httpServices)
 
 	return bookModuleServices
@@ -67,6 +74,15 @@ func registerBookQueryHandlers(commonServices *CommonServices, bookModuleService
 		&book_application.GetBookByIDQuery{},
 		bookModuleServices.GetBookByIDQueryHandler,
 	)
+}
+
+func registerBookEventHandlers(commonServices *CommonServices, bookModuleServices *BookModuleServices) {
+	registerEvent(
+		*commonServices.EventBus,
+		book_domain.BookCreatedEventName,
+		bookModuleServices.PrintBookOnBookCreatedEventHandler,
+	)
+
 }
 
 func registerBookRoutes(commonServices *CommonServices, httpServices *HttpServices) {
