@@ -1,6 +1,6 @@
 package book_application
 
-const GetAllBooksQueryName = "GetAllBooksQuery"
+const getAllBooksQueryName = "GetAllBooksQuery"
 
 type GetAllBooksQuery struct{}
 
@@ -9,7 +9,7 @@ func NewGetAllBooksQuery() *GetAllBooksQuery {
 }
 
 func (hq GetAllBooksQuery) Type() string {
-	return GetAllBooksQueryName
+	return getAllBooksQueryName
 }
 
 func (hq GetAllBooksQuery) Data() map[string]any {

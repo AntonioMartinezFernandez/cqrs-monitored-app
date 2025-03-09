@@ -2,12 +2,6 @@ package book_http
 
 import "time"
 
-type CreateBookRequestBody struct {
-	ID       string `json:"id"`
-	Title    string `json:"title"`
-	AuthorID string `json:"authorID"`
-}
-
 type Book struct {
 	ID        string    `json:"id" jsonapi:"primary,books"`
 	Title     string    `json:"title" jsonapi:"attr,title"`
@@ -23,4 +17,20 @@ type GetBookByIDQueryHandlerResponse struct {
 type GetAllBooksQueryHandlerResponse struct {
 	Id    string `json:"id" jsonapi:"primary,books"`
 	Books []Book `json:"books" jsonapi:"attr,books"`
+}
+
+type CreateBookRequestBody struct {
+	ID       string `json:"id"`
+	Title    string `json:"title"`
+	AuthorID string `json:"authorID"`
+}
+
+type UpdateBookRequestBody struct {
+	ID       string `json:"id"`
+	Title    string `json:"title"`
+	AuthorID string `json:"authorID"`
+}
+
+type DeleteBookRequestBody struct {
+	ID string `json:"id"`
 }

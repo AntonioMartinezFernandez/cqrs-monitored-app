@@ -3,6 +3,7 @@ package book_infra
 import (
 	"context"
 	"errors"
+	"slices"
 	"sync"
 
 	book_domain "github.com/AntonioMartinezFernandez/cqrs-monitored-app/internal/book/domain"
@@ -18,7 +19,7 @@ type InMemoryBookRepository struct {
 func NewInMemoryBookRepository() *InMemoryBookRepository {
 	return &InMemoryBookRepository{
 		mut:   &sync.Mutex{},
-		books: make([]book_domain.Book, 0),
+		books: []book_domain.Book{},
 	}
 }
 
@@ -26,11 +27,7 @@ func (r *InMemoryBookRepository) FindAll(_ context.Context) ([]book_domain.Book,
 	r.mut.Lock()
 	defer r.mut.Unlock()
 
-	books := make([]book_domain.Book, 0, len(r.books))
-	for _, book := range r.books {
-		books = append(books, book)
-	}
-	return books, nil
+	return r.books, nil
 }
 
 func (r *InMemoryBookRepository) FindByID(_ context.Context, id string) (*book_domain.Book, error) {
@@ -80,15 +77,12 @@ func (r *InMemoryBookRepository) Delete(_ context.Context, id string) error {
 	r.mut.Lock()
 	defer r.mut.Unlock()
 
-	books := make([]book_domain.Book, 0, len(r.books))
-
-	for _, book := range r.books {
-		if book.ID() != id {
-			books = append(books, book)
+	for i, book := range r.books {
+		if book.ID() == id {
+			r.books = slices.Delete(r.books, i, i+1)
+			return nil
 		}
 	}
 
-	r.books = books
-
-	return nil
+	return errors.New("book not found")
 }

@@ -1,6 +1,6 @@
 package book_application
 
-const GetBookByIDQueryName = "GetBookByIDQuery"
+const getBookByIDQueryName = "GetBookByIDQuery"
 
 type GetBookByIDQuery struct {
 	ID string
@@ -13,7 +13,7 @@ func NewGetBookByIDQuery(id string) *GetBookByIDQuery {
 }
 
 func (hq GetBookByIDQuery) Type() string {
-	return GetBookByIDQueryName
+	return getBookByIDQueryName
 }
 
 func (hq GetBookByIDQuery) Data() map[string]any {

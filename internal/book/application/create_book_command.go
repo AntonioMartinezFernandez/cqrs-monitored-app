@@ -2,8 +2,8 @@ package book_application
 
 import "time"
 
-const createBookName = "create_book_command"
-const blockingKey = "book_operation"
+const createBookCommandName = "create_book_command"
+const createBookBlockingKey = "book_operation"
 
 type CreateBookCommand struct {
 	ID        string
@@ -27,9 +27,9 @@ func NewCreateBookCommand(
 }
 
 func (cdp *CreateBookCommand) Type() string {
-	return createBookName
+	return createBookCommandName
 }
 
 func (cdp *CreateBookCommand) BlockingKey() string {
-	return blockingKey
+	return createBookBlockingKey
 }
