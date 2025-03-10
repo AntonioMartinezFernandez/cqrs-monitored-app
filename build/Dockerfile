@@ -16,7 +16,7 @@ RUN go mod download
 
 WORKDIR /cqrs-monitored-app/cmd/app
 
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -a -installsuffix cgo -o cqrs-monitored-app
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -a -installsuffix cgo -o cqrs-monitored-app
 
 #####################################
 #        Deployable image           #

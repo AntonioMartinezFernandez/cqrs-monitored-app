@@ -25,6 +25,10 @@ run-app:
     cp .env.example .env
     go run cmd/app/main.go
 
+# Run auxiliar infra services
+run-local-infra:
+    docker compose up -d
+
 # Run all tests, or any tests specified by the path with its extra parameters
 test path="./..." *params="":
     go test {{path}} -race {{params}}
