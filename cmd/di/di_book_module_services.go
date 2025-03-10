@@ -6,6 +6,7 @@ import (
 	book_infra "github.com/AntonioMartinezFernandez/cqrs-monitored-app/internal/book/infra"
 	book_http "github.com/AntonioMartinezFernandez/cqrs-monitored-app/internal/book/infra/http"
 	"github.com/AntonioMartinezFernandez/cqrs-monitored-app/pkg/bus/event"
+	http_server "github.com/AntonioMartinezFernandez/cqrs-monitored-app/pkg/http-server"
 )
 
 type BookModuleServices struct {
@@ -86,25 +87,37 @@ func registerBookEventHandlers(commonServices *CommonServices, bookModuleService
 }
 
 func registerBookRoutes(commonServices *CommonServices, httpServices *HttpServices) {
+	createBookSchemaValidatorMiddleware := http_server.NewRequestValidatorMiddleware(
+		httpServices.JsonApiResponseMiddleware,
+		book_http.PostBookJsonSchema,
+	)
+
+	updateBookSchemaValidatorMiddleware := http_server.NewRequestValidatorMiddleware(
+		httpServices.JsonApiResponseMiddleware,
+		book_http.PutBookJsonSchema,
+	)
+
 	httpServices.Router.Post(
 		"/api/books",
 		book_http.NewPostBookController(
 			commonServices.CommandBus,
 			httpServices.JsonApiResponseMiddleware,
 		),
-	)
-
-	httpServices.Router.Delete(
-		"/api/books/{book_id}",
-		book_http.NewDeleteBookController(
-			commonServices.CommandBus,
-			httpServices.JsonApiResponseMiddleware,
-		),
+		createBookSchemaValidatorMiddleware.Middleware,
 	)
 
 	httpServices.Router.Put(
 		"/api/books/{book_id}",
 		book_http.NewPutBookController(
+			commonServices.CommandBus,
+			httpServices.JsonApiResponseMiddleware,
+		),
+		updateBookSchemaValidatorMiddleware.Middleware,
+	)
+
+	httpServices.Router.Delete(
+		"/api/books/{book_id}",
+		book_http.NewDeleteBookController(
 			commonServices.CommandBus,
 			httpServices.JsonApiResponseMiddleware,
 		),

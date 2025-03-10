@@ -8,6 +8,14 @@ alias run := run-app
 default:
     @just --list
 
+dockerbuild:
+    docker --debug build -t cqrs-monitored-app -f build/Dockerfile .
+
+build:
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s"	\
+    -o bin/cqrs-monitored-app \
+    cmd/app/main.go
+
 # Run the app with hot reload
 air:
     air -c app.air.toml
