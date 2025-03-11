@@ -16,18 +16,20 @@ build:
     -o bin/cqrs-monitored-app \
     cmd/app/main.go
 
+# Run auxiliar infra services
+startinfra:
+    docker compose up -d
+
 # Run the app with hot reload
-air:
+hotreload:
     air -c app.air.toml
 
 # Runs the application with the .env.example file
-run-app:
+run:
     cp .env.example .env
     go run cmd/app/main.go
 
-# Run auxiliar infra services
-run-local-infra:
-    docker compose up -d
+
 
 # Run all tests, or any tests specified by the path with its extra parameters
 test path="./..." *params="":
@@ -42,7 +44,7 @@ test-unit *params:
     go test -p 2 $(go list ./... | grep -v ./test) -race {{params}}
 
 # Clears the test cache
-clear-cache:
+clearcache:
     go clean -testcache
 
 # Formats all go files
