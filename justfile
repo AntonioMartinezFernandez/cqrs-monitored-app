@@ -2,7 +2,6 @@ alias t := test
 alias ti := test-integration
 alias tu := test-unit
 alias l := lint
-alias run := run-app
 
 # Lists all available tasks
 default:
@@ -10,6 +9,8 @@ default:
 
 dockerbuild:
     docker --debug build -t cqrs-monitored-app -f build/Dockerfile .
+    docker tag cqrs-monitored-app:latest antoniomarfer/cqrs-monitored-app:latest
+    docker push antoniomarfer/cqrs-monitored-app:latest
 
 build:
     CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s"	\
