@@ -1,15 +1,15 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
+	"math/rand"
 	"time"
 
 	"github.com/AntonioMartinezFernandez/cqrs-monitored-app/cmd/di"
-	"github.com/AntonioMartinezFernandez/cqrs-monitored-app/pkg/logger"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/metric"
+	"github.com/AntonioMartinezFernandez/cqrs-monitored-app/pkg/observability"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 func main() {
@@ -33,11 +33,11 @@ func main() {
 		)
 	}()
 
-	// Create custom metric and send data every 5 seconds
-	customCounterMetric, _ := di.CommonServices.Observability.Meter.Int64Counter(
-		"cqrs-monitored-app.example-metric", // name of the metric
-	)
-	go counterAddMetric(ctx, di.CommonServices.Logger, customCounterMetric)
+	go observability.StartMetricsServer(ctx, di.CommonServices.Logger, ":9100")
+
+	// Create custom metrics and send data every 5 seconds
+	addCounterMetricValue()
+	addGaugeMetricValue()
 
 	// Shutdown servers on SIGINT, SIGTERM or error
 	select {
@@ -48,21 +48,30 @@ func main() {
 	}
 }
 
-func counterAddMetric(ctx context.Context, l logger.Logger, customCounterMetric metric.Int64Counter) {
-	for range time.Tick(5 * time.Second) {
-		l.Info(
-			ctx,
-			"sending custom counter metric",
-			slog.String(
-				"metric_name",
-				"cqrs_monitored_app_example_metric_total",
-			),
-		)
+func addCounterMetricValue() {
+	opsProcessed := promauto.NewCounter(prometheus.CounterOpts{
+		Name:        "cqrs_monitored_app_example_metric_total",
+		Help:        "Example custom counter metric",
+		ConstLabels: prometheus.Labels{"example_label": "example_label_value"},
+	})
+	go func() {
+		for {
+			opsProcessed.Inc()
+			time.Sleep(5 * time.Second)
+		}
+	}()
+}
 
-		// Record values to the metric instruments and add labels
-		customCounterMetric.Add(ctx, 1, metric.WithAttributes(
-			attribute.String("custom_string_attribute", "custom_string_attribute_value"),
-			attribute.Int("custom_int_attribute", 1),
-		))
-	}
+func addGaugeMetricValue() {
+	opsProcessed := promauto.NewGauge(prometheus.GaugeOpts{
+		Name:        "cqrs_monitored_app_example_gauge_metric",
+		Help:        "Example custom gauge metric",
+		ConstLabels: prometheus.Labels{"example_label": "example_label_value"},
+	})
+	go func() {
+		for {
+			opsProcessed.Set(float64(rand.Intn(100)))
+			time.Sleep(5 * time.Second)
+		}
+	}()
 }
