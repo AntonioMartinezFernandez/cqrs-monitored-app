@@ -13,8 +13,10 @@ import (
 	pkg_query_bus "github.com/AntonioMartinezFernandez/cqrs-monitored-app/pkg/bus/query"
 	pkg_json_schema "github.com/AntonioMartinezFernandez/cqrs-monitored-app/pkg/json-schema"
 	pkg_logger "github.com/AntonioMartinezFernandez/cqrs-monitored-app/pkg/logger"
+	pkg_messaging "github.com/AntonioMartinezFernandez/cqrs-monitored-app/pkg/messaging"
 	pkg_mutex_service "github.com/AntonioMartinezFernandez/cqrs-monitored-app/pkg/mutex-service"
 	pkg_observability "github.com/AntonioMartinezFernandez/cqrs-monitored-app/pkg/observability"
+	pkg_queue "github.com/AntonioMartinezFernandez/cqrs-monitored-app/pkg/queue"
 	pkg_utils "github.com/AntonioMartinezFernandez/cqrs-monitored-app/pkg/utils"
 
 	"github.com/joho/godotenv"
@@ -24,16 +26,18 @@ type CommonServices struct {
 	Config      configs.Config
 	Environment configs.Environment
 
-	Logger              pkg_logger.Logger
-	DistributedMutex    pkg_mutex_service.MutexService
-	JsonSchemaValidator *pkg_json_schema.JsonSchemaValidator
-	Observability       *pkg_observability.OtelObservability
-	UlidProvider        pkg_utils.UlidProvider
-	UuidProvider        pkg_utils.UuidProvider
-	TimeProvider        pkg_utils.DateTimeProvider
-	CommandBus          *pkg_command_bus.CommandBus
-	QueryBus            *pkg_query_bus.QueryBus
-	EventBus            *pkg_event_bus.EventBus
+	Logger               pkg_logger.Logger
+	DistributedMutex     pkg_mutex_service.MutexService
+	JsonSchemaValidator  *pkg_json_schema.JsonSchemaValidator
+	Observability        *pkg_observability.OtelObservability
+	UlidProvider         pkg_utils.UlidProvider
+	UuidProvider         pkg_utils.UuidProvider
+	TimeProvider         pkg_utils.DateTimeProvider
+	CommandBus           *pkg_command_bus.CommandBus
+	QueryBus             *pkg_query_bus.QueryBus
+	EventBus             *pkg_event_bus.EventBus
+	OldInMemoryMQ        pkg_queue.MessageQueue
+	InMemoryMessageQueue *pkg_messaging.InMemoryQueue
 }
 
 func InitCommonServices(ctx context.Context) *CommonServices {
@@ -48,6 +52,8 @@ func InitCommonServices(ctx context.Context) *CommonServices {
 	commandBus := pkg_command_bus.InitCommandBus(logger, distributedMutex)
 	queryBus := pkg_query_bus.InitQueryBus(logger)
 	eventBus := pkg_event_bus.NewEventBus()
+	oldMessageQueue := pkg_queue.NewInMemoryMessageQueue(logger, 1)
+	inMemoryMessageQueue := pkg_messaging.NewInMemoryQueue("in-memory-message-queue", ulidProvider)
 
 	grpcConnection, grpcErr := pkg_observability.InitGrpcConnInsecure(config.OtelGrpcHost, config.OtelGrpcPort)
 	if grpcErr != nil {
@@ -67,16 +73,18 @@ func InitCommonServices(ctx context.Context) *CommonServices {
 		Config:      config,
 		Environment: environment,
 
-		Logger:              logger,
-		DistributedMutex:    distributedMutex,
-		JsonSchemaValidator: &jsonSchemaValidator,
-		Observability:       otelObservability,
-		UlidProvider:        ulidProvider,
-		UuidProvider:        uuidProvider,
-		TimeProvider:        timeProvider,
-		CommandBus:          commandBus,
-		QueryBus:            queryBus,
-		EventBus:            eventBus,
+		Logger:               logger,
+		DistributedMutex:     distributedMutex,
+		JsonSchemaValidator:  &jsonSchemaValidator,
+		Observability:        otelObservability,
+		UlidProvider:         ulidProvider,
+		UuidProvider:         uuidProvider,
+		TimeProvider:         timeProvider,
+		CommandBus:           commandBus,
+		QueryBus:             queryBus,
+		EventBus:             eventBus,
+		OldInMemoryMQ:        oldMessageQueue,
+		InMemoryMessageQueue: inMemoryMessageQueue,
 	}
 }
 

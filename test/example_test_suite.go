@@ -85,7 +85,7 @@ func (suite *ExampleTestSuite) ExecuteRequest(req *http.Request) *httptest.Respo
 	return resRec
 }
 
-func (suite *ExampleTestSuite) CheckResponse(expectedStatusCode int, expectedResponse string, response *httptest.ResponseRecorder, formats ...interface{}) {
+func (suite *ExampleTestSuite) CheckResponse(expectedStatusCode int, expectedResponse string, response *httptest.ResponseRecorder, formats ...any) {
 	ja := jsonassert.New(suite.T())
 	suite.CheckResponseCode(expectedStatusCode, response.Code)
 

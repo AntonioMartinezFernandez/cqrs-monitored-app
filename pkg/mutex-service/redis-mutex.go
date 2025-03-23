@@ -25,7 +25,7 @@ func NewRedisMutexService(redisClient *redis.Client, logger pkg_logger.Logger) *
 	return &RedisMutexService{sync: redsync.New(pool), logger: logger}
 }
 
-func (rm *RedisMutexService) Mutex(ctx context.Context, key string, fn func() (interface{}, error)) (interface{}, error) {
+func (rm *RedisMutexService) Mutex(ctx context.Context, key string, fn func() (any, error)) (any, error) {
 	mutex := rm.sync.NewMutex(
 		mutexName+":"+key,
 		redsync.WithExpiry(30*time.Second),
@@ -33,7 +33,7 @@ func (rm *RedisMutexService) Mutex(ctx context.Context, key string, fn func() (i
 		redsync.WithTimeoutFactor(0.05),
 	)
 
-	if _, err := utils.RetryFunc(func() (interface{}, error) {
+	if _, err := utils.RetryFunc(func() (any, error) {
 		return nil, rm.adquireLock(ctx, mutex)
 	}, 4); err != nil {
 		rm.logger.Error(ctx, "error locking mutex sync", slog.String("err", err.Error()), slog.String("mutex_key", mutex.Name()))
@@ -41,7 +41,7 @@ func (rm *RedisMutexService) Mutex(ctx context.Context, key string, fn func() (i
 	}
 
 	result, err := fn()
-	if _, err := utils.RetryFunc(func() (interface{}, error) {
+	if _, err := utils.RetryFunc(func() (any, error) {
 		return nil, rm.releaseLock(ctx, mutex)
 	}, 4); err != nil {
 		rm.logger.Error(ctx, "error unlocking mutex sync", slog.String("error", err.Error()), slog.String("mutex_key", mutex.Name()))

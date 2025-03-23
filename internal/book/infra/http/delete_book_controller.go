@@ -20,7 +20,7 @@ func NewDeleteBookController(
 
 		cmd := book_application.NewDeleteBookCommand(bookID)
 
-		err := commandBus.Dispatch(r.Context(), cmd)
+		err := commandBus.Exec(r.Context(), cmd)
 		if err != nil {
 			jarm.WriteErrorResponse(
 				r.Context(),

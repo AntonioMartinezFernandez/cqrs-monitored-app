@@ -13,15 +13,14 @@ import (
 
 type Bus interface {
 	RegisterCommand(command bus.Dto, handler CommandHandler) error
-	GetHandler(command bus.Dto) (CommandHandler, error)
-	Dispatch(ctx context.Context, dto bus.Dto) error
-	DispatchAsync(ctx context.Context, dto bus.Dto) error
-	ReprocessAsyncFailed(ctx context.Context, maxTimes int)
+	Exec(ctx context.Context, dto bus.Dto) error
+	ExecAsync(ctx context.Context, dto bus.Dto) error
+	ReprocessFailedAsyncCommands(ctx context.Context, maxTimes int)
 }
 
 type CommandBus struct {
 	handlers       map[string]CommandHandler
-	lock           sync.Mutex
+	mut            sync.Mutex
 	logger         pkg_logger.Logger
 	failedCommands chan *FailedCommand
 
@@ -31,7 +30,7 @@ type CommandBus struct {
 func InitCommandBus(logger pkg_logger.Logger, mutex mutex.MutexService) *CommandBus {
 	return &CommandBus{
 		handlers:       make(map[string]CommandHandler, 0),
-		lock:           sync.Mutex{},
+		mut:            sync.Mutex{},
 		logger:         logger,
 		failedCommands: make(chan *FailedCommand),
 
@@ -39,41 +38,9 @@ func InitCommandBus(logger pkg_logger.Logger, mutex mutex.MutexService) *Command
 	}
 }
 
-type FailedCommand struct {
-	command        bus.Dto
-	handler        CommandHandler
-	timesProcessed int
-}
-
-type CommandAlreadyRegistered struct {
-	message     string
-	commandName string
-}
-
-func (i CommandAlreadyRegistered) Error() string {
-	return i.message
-}
-
-func NewCommandAlreadyRegistered(message string, commandName string) CommandAlreadyRegistered {
-	return CommandAlreadyRegistered{message: message, commandName: commandName}
-}
-
-type CommandNotRegistered struct {
-	message     string
-	commandName string
-}
-
-func (i CommandNotRegistered) Error() string {
-	return i.message
-}
-
-func NewCommandNotRegistered(message string, commandName string) CommandNotRegistered {
-	return CommandNotRegistered{message: message, commandName: commandName}
-}
-
 func (cb *CommandBus) RegisterCommand(command bus.Dto, handler CommandHandler) error {
-	cb.lock.Lock()
-	defer cb.lock.Unlock()
+	cb.mut.Lock()
+	defer cb.mut.Unlock()
 
 	commandName, err := cb.commandName(command)
 	if err != nil {
@@ -89,7 +56,7 @@ func (cb *CommandBus) RegisterCommand(command bus.Dto, handler CommandHandler) e
 	return nil
 }
 
-func (cb *CommandBus) GetHandler(command bus.Dto) (CommandHandler, error) {
+func (cb *CommandBus) getHandler(command bus.Dto) (CommandHandler, error) {
 	commandName, err := cb.commandName(command)
 	if err != nil {
 		return nil, err
@@ -101,8 +68,8 @@ func (cb *CommandBus) GetHandler(command bus.Dto) (CommandHandler, error) {
 	return nil, NewCommandNotRegistered("command not registered", *commandName)
 }
 
-func (cb *CommandBus) Dispatch(ctx context.Context, command bus.Dto) error {
-	handler, err := cb.GetHandler(command)
+func (cb *CommandBus) Exec(ctx context.Context, command bus.Dto) error {
+	handler, err := cb.getHandler(command)
 	if err != nil {
 		return err
 	}
@@ -110,7 +77,7 @@ func (cb *CommandBus) Dispatch(ctx context.Context, command bus.Dto) error {
 	return cb.doHandle(ctx, handler, command)
 }
 
-func (cb *CommandBus) DispatchAsync(ctx context.Context, command bus.Dto) error {
+func (cb *CommandBus) ExecAsync(ctx context.Context, command bus.Dto) error {
 	commandName, err := cb.commandName(command)
 	if err != nil {
 		return err
@@ -173,8 +140,8 @@ func (cb *CommandBus) commandName(cmd any) (*string, error) {
 	return &name, nil
 }
 
-// ReprocessAsyncFailed will process all failed async commands in the failedCommands channel
-func (cb *CommandBus) ReprocessAsyncFailed(ctx context.Context, maxTimes int) {
+// ReprocessFailedAsyncCommands will process all failed async commands in the failedCommands channel
+func (cb *CommandBus) ReprocessFailedAsyncCommands(ctx context.Context, maxTimes int) {
 	for {
 		select {
 		case <-ctx.Done():
